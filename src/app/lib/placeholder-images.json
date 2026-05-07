@@ -1,0 +1,35 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Abstract musical digital energy",
+      "imageUrl": "https://picsum.photos/seed/music-vis/1200/800",
+      "imageHint": "digital music"
+    },
+    {
+      "id": "template-edm",
+      "description": "EDM Circle visualizer template",
+      "imageUrl": "https://picsum.photos/seed/edm/600/400",
+      "imageHint": "abstract geometric"
+    },
+    {
+      "id": "template-chill",
+      "description": "Chill Player visualizer template",
+      "imageUrl": "https://picsum.photos/seed/chill/600/400",
+      "imageHint": "lofi scenery"
+    },
+    {
+      "id": "template-anime",
+      "description": "Anime style visualizer template",
+      "imageUrl": "https://picsum.photos/seed/anime/600/400",
+      "imageHint": "anime aesthetic"
+    },
+    {
+      "id": "template-neon",
+      "description": "Neon Wave visualizer template",
+      "imageUrl": "https://picsum.photos/seed/neon/600/400",
+      "imageHint": "cyberpunk neon"
+    }
+  ]
+}
