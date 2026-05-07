@@ -1,0 +1,118 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * CORE PHILOSOPHY
+     * This ruleset enforces a strict user-ownership model for all private data, while 
+     * allowing public access to global configuration templates. Authorization is 
+     * primarily path-based, leveraging the hierarchical structure of Firestore.
+     * 
+     * DATA STRUCTURE
+     * - /users/{userId}/projects: User-owned music video projects.
+     * - /users/{userId}/mediaAssets: Private audio and image files uploaded by users.
+     * - /templates: Global, system-provided visualizer presets.
+     * - /users/.../audioAnalysisResults: AI-generated metadata for audio assets.
+     * - /users/.../renderJobs: Processing status for video exports.
+     * 
+     * KEY SECURITY DECISIONS
+     * 1. Path-Based Authorization: Most rules verify the {userId} in the path 
+     *    against the request.auth.uid to ensure users cannot access or list 
+     *    other users' data.
+     * 2. Authorization Independence: Critical fields like 'userId' are denormalized 
+     *    into subcollection documents (e.g., renderJobs) to allow rules to run 
+     *    atomically without expensive get() lookups.
+     * 3. Prototyping Flexibility: Rules enforce WHO can write but do not 
+     *    strictly enforce the object schema (fields/types) to allow for 
+     *    rapid UI development and iteration.
+     */
+
+    // --- Helper Functions ---
+
+    /** @description Checks if the user is authenticated. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the authenticated user's ID matches the provided ID. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Checks if the document exists and the current user is the owner. */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Rules for user-owned projects.
+     * @path /users/{userId}/projects/{projectId}
+     * @allow (create) if auth user ID matches {userId} and data.userId field.
+     * @deny (list) if auth user ID does not match {userId}.
+     * @principle Path-based ownership and internal data consistency.
+     */
+    match /users/{userId}/projects/{projectId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Rules for video render jobs associated with a specific project.
+       * @path /users/{userId}/projects/{projectId}/renderJobs/{renderJobId}
+       * @allow (get) if the authenticated user owns the parent user path.
+       * @deny (create) if the internal userId field does not match the path.
+       * @principle Denormalized owner ID validation for subcollection security.
+       */
+      match /renderJobs/{renderJobId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description Rules for user-uploaded media assets (audio/images).
+     * @path /users/{userId}/mediaAssets/{mediaAssetId}
+     * @allow (update) if the existing owner is the one performing the update.
+     * @deny (get) if the requester is not the asset owner.
+     * @principle Restricts access to a user's own data tree.
+     */
+    match /users/{userId}/mediaAssets/{mediaAssetId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Rules for audio analysis results for a specific asset.
+       * @path /users/{userId}/mediaAssets/{mediaAssetId}/audioAnalysisResults/{analysisResultId}
+       * @allow (list) if the authenticated user owns the parent media asset.
+       * @deny (update) if the userId is changed during the operation.
+       * @principle Relational integrity through immutable ownership fields.
+       */
+      match /audioAnalysisResults/{analysisResultId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description Rules for global visualizer templates.
+     * @path /templates/{templateId}
+     * @allow (get, list) for any user, including guests.
+     * @deny (write) for all users via client SDK; intended for admin/system management.
+     * @principle Public read access with restricted write permissions for global configuration.
+     */
+    match /templates/{templateId} {
+      allow get, list: if true;
+      // CRITICAL: Cannot implement owner-only writes. The 'Template' entity is missing an 'ownerId' or 'authorId' field.
+      allow create, update, delete: if false; // TODO: Add admin role validation once system roles are defined.
+    }
+  }
+}

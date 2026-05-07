@@ -1,0 +1,411 @@
+{
+  "entities": {
+    "Project": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Project",
+      "type": "object",
+      "description": "Represents a user's video creation project, combining audio, images, and visualizer settings to generate a music video.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Project entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who owns this project. (Relationship: User 1:N Project)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The user-defined name for the project."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description provided by the user for the project."
+        },
+        "creationDate": {
+          "type": "string",
+          "description": "Timestamp when the project was first created.",
+          "format": "date-time"
+        },
+        "lastModifiedDate": {
+          "type": "string",
+          "description": "Timestamp when the project was last updated.",
+          "format": "date-time"
+        },
+        "audioAssetId": {
+          "type": "string",
+          "description": "Reference to the primary audio asset used in this project. (Relationship: MediaAsset 1:N Project)"
+        },
+        "imageAssetIds": {
+          "type": "array",
+          "description": "References to image assets used as visuals or backgrounds within this project. (Relationship: MediaAsset N:N Project)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "templateId": {
+          "type": "string",
+          "description": "Reference to the selected visualizer template for this project. (Relationship: Template 1:N Project)"
+        },
+        "customizationSettings": {
+          "type": "string",
+          "description": "JSON string representing the user's custom settings and overrides for the chosen template (e.g., colors, text overlays, effect intensity, particle configuration, waveform style, transitions). This allows flexible storage of dynamic configuration."
+        },
+        "latestRenderJobId": {
+          "type": "string",
+          "description": "Reference to the most recent video render job associated with this project. (Relationship: VideoRenderJob 1:1 Project)"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the project (e.g., 'draft', 'rendered', 'archived')."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "creationDate",
+        "lastModifiedDate",
+        "audioAssetId",
+        "templateId",
+        "customizationSettings",
+        "status"
+      ]
+    },
+    "MediaAsset": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MediaAsset",
+      "type": "object",
+      "description": "Stores metadata about uploaded audio and image files used across projects.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MediaAsset entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who uploaded this asset. (Relationship: User 1:N MediaAsset)"
+        },
+        "originalFileName": {
+          "type": "string",
+          "description": "The original name of the file when it was uploaded by the user."
+        },
+        "storagePath": {
+          "type": "string",
+          "description": "The URI or URL pointing to the stored media file (e.g., in a cloud storage bucket).",
+          "format": "uri"
+        },
+        "mimeType": {
+          "type": "string",
+          "description": "The MIME type of the uploaded file (e.g., 'audio/mpeg', 'image/jpeg')."
+        },
+        "fileSize": {
+          "type": "number",
+          "description": "The size of the file in bytes."
+        },
+        "uploadDate": {
+          "type": "string",
+          "description": "Timestamp when the media asset was uploaded.",
+          "format": "date-time"
+        },
+        "assetType": {
+          "type": "string",
+          "description": "The type of the asset, either 'audio' or 'image'."
+        },
+        "durationSeconds": {
+          "type": "number",
+          "description": "The duration of the audio file in seconds (applicable for audio assets)."
+        },
+        "widthPixels": {
+          "type": "number",
+          "description": "The width of the image in pixels (applicable for image assets)."
+        },
+        "heightPixels": {
+          "type": "number",
+          "description": "The height of the image in pixels (applicable for image assets)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "originalFileName",
+        "storagePath",
+        "mimeType",
+        "fileSize",
+        "uploadDate",
+        "assetType"
+      ]
+    },
+    "AudioAnalysisResult": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AudioAnalysisResult",
+      "type": "object",
+      "description": "Stores the results of an audio analysis performed on an uploaded audio asset, used for AI style recommendations and dynamic visualizations.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AudioAnalysisResult entity."
+        },
+        "audioAssetId": {
+          "type": "string",
+          "description": "Reference to the audio asset that was analyzed. (Relationship: MediaAsset 1:N AudioAnalysisResult)"
+        },
+        "analysisDate": {
+          "type": "string",
+          "description": "Timestamp when the audio analysis was performed.",
+          "format": "date-time"
+        },
+        "beatsPerMinute": {
+          "type": "number",
+          "description": "The detected beats per minute (BPM) of the audio."
+        },
+        "averageVolume": {
+          "type": "number",
+          "description": "The average volume level of the audio."
+        },
+        "peakVolume": {
+          "type": "number",
+          "description": "The peak volume level observed in the audio."
+        },
+        "tempoDescription": {
+          "type": "string",
+          "description": "A textual description of the audio's tempo (e.g., 'slow', 'moderate', 'fast'), often derived from AI analysis."
+        },
+        "genreSuggestion": {
+          "type": "string",
+          "description": "An AI-suggested genre for the audio, based on its characteristics, used for template recommendations."
+        },
+        "frequencySpectrumDataUrl": {
+          "type": "string",
+          "description": "Optional: URL to a file containing detailed frequency spectrum data or a summarized JSON representation, used for advanced visualizations.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "audioAssetId",
+        "analysisDate",
+        "beatsPerMinute",
+        "averageVolume",
+        "peakVolume"
+      ]
+    },
+    "Template": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Template",
+      "type": "object",
+      "description": "Defines a pre-designed visualizer style that users can select for their projects, including default configurations for effects and animations.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Template entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The display name of the template (e.g., 'EDM Circle', 'Neon Wave')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the template's visual style and features."
+        },
+        "thumbnailUrl": {
+          "type": "string",
+          "description": "URL to a preview image or video demonstrating the template.",
+          "format": "uri"
+        },
+        "defaultConfiguration": {
+          "type": "string",
+          "description": "JSON string representing the template's default settings (animation configs, particle effects, waveform styles, color systems, transitions). This defines the baseline look and feel."
+        },
+        "isPremium": {
+          "type": "boolean",
+          "description": "Indicates if this template is a premium feature requiring a subscription or purchase."
+        },
+        "tags": {
+          "type": "array",
+          "description": "Categorization tags for the template (e.g., 'EDM', 'Chill', 'Abstract', 'Minimalist') to aid search and recommendations.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "thumbnailUrl",
+        "defaultConfiguration",
+        "isPremium"
+      ]
+    },
+    "VideoRenderJob": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "VideoRenderJob",
+      "type": "object",
+      "description": "Tracks the status and details of a video rendering process for a project, from submission to completion or failure.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the VideoRenderJob entity."
+        },
+        "projectId": {
+          "type": "string",
+          "description": "Reference to the project for which this video is being rendered. (Relationship: Project 1:N VideoRenderJob)"
+        },
+        "submissionDate": {
+          "type": "string",
+          "description": "Timestamp when the rendering job was submitted.",
+          "format": "date-time"
+        },
+        "startDate": {
+          "type": "string",
+          "description": "Timestamp when the rendering process actually began.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "Timestamp when the rendering process completed or failed.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the render job (e.g., 'queued', 'processing', 'encoding', 'completed', 'failed')."
+        },
+        "progressPercentage": {
+          "type": "number",
+          "description": "The percentage completion of the rendering job (0-100)."
+        },
+        "outputVideoUrl": {
+          "type": "string",
+          "description": "The URL to the final rendered MP4 video file, if completed successfully.",
+          "format": "uri"
+        },
+        "errorMessage": {
+          "type": "string",
+          "description": "Details of any error that occurred during the rendering process, if the job failed."
+        }
+      },
+      "required": [
+        "id",
+        "projectId",
+        "submissionDate",
+        "status"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}/projects/{projectId}",
+        "definition": {
+          "entityName": "Project",
+          "schema": {
+            "$ref": "#/backend/entities/Project"
+          },
+          "description": "Stores individual user projects. Access restricted to the 'userId' in the path. The 'Project' document already contains 'userId', which matches the path parameter for clear ownership and authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the User who owns the project."
+            },
+            {
+              "name": "projectId",
+              "description": "The unique identifier for the specific Project."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/mediaAssets/{mediaAssetId}",
+        "definition": {
+          "entityName": "MediaAsset",
+          "schema": {
+            "$ref": "#/backend/entities/MediaAsset"
+          },
+          "description": "Stores user-uploaded audio and image assets. Access restricted to the 'userId' in the path. The 'MediaAsset' document already contains 'userId', which matches the path parameter for clear ownership and authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the User who uploaded the media asset."
+            },
+            {
+              "name": "mediaAssetId",
+              "description": "The unique identifier for the specific MediaAsset (audio or image)."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/mediaAssets/{mediaAssetId}/audioAnalysisResults/{analysisResultId}",
+        "definition": {
+          "entityName": "AudioAnalysisResult",
+          "schema": {
+            "$ref": "#/backend/entities/AudioAnalysisResult"
+          },
+          "description": "Stores the analysis results for a specific audio asset belonging to a user. Access restricted to the 'userId' in the path. This document MUST include a denormalized 'userId' field, copied from the parent 'MediaAsset' owner, for complete authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the User who owns the parent media asset."
+            },
+            {
+              "name": "mediaAssetId",
+              "description": "The unique identifier for the parent MediaAsset."
+            },
+            {
+              "name": "analysisResultId",
+              "description": "The unique identifier for the specific AudioAnalysisResult."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/templates/{templateId}",
+        "definition": {
+          "entityName": "Template",
+          "schema": {
+            "$ref": "#/backend/entities/Template"
+          },
+          "description": "Stores global, publicly available visualizer templates. Some templates might be premium, requiring different access rules, but the collection itself is generally publicly readable. No 'userId' is present as these are not user-owned.",
+          "params": [
+            {
+              "name": "templateId",
+              "description": "The unique identifier for the specific Template."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/projects/{projectId}/renderJobs/{renderJobId}",
+        "definition": {
+          "entityName": "VideoRenderJob",
+          "schema": {
+            "$ref": "#/backend/entities/VideoRenderJob"
+          },
+          "description": "Stores individual video rendering jobs associated with a user's project. Access restricted to the 'userId' in the path. This document MUST include a denormalized 'userId' field, copied from the parent 'Project' owner, for complete authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the User who owns the parent project."
+            },
+            {
+              "name": "projectId",
+              "description": "The unique identifier for the parent Project."
+            },
+            {
+              "name": "renderJobId",
+              "description": "The unique identifier for the specific VideoRenderJob."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to be secure, scalable, and debuggable, strictly adhering to the core design principles and strategy mandates. Authorization Independence is a critical focus, achieved primarily through path-based ownership for user-specific data and the denormalization of owner IDs (userId) into subcollection documents where necessary. This eliminates the need for expensive and complex `get()` operations in security rules, making rules atomic and easier to debug. For instance, `AudioAnalysisResult` and `VideoRenderJob` documents will explicitly include the `userId` of their respective parent `MediaAsset` and `Project` owners.\n\nStructural Segregation is applied by separating user-owned private data from global, publicly accessible data. All user-specific entities (`Project`, `MediaAsset`, `AudioAnalysisResult`, `VideoRenderJob`) are nested under a `/users/{userId}` path, ensuring that access to these documents is inherently restricted to the authenticated user matching the `{userId}` wildcard in the path. This provides a homogeneous security posture for all documents within these user-specific hierarchies.\n\nAccess Modeling standardizes on Path-Based ownership for private user data, utilizing hierarchical paths such as `/users/{userId}/projects/{projectId}`. Public templates are stored in a top-level collection `/templates/{templateId}`, which simplifies their access rules for broad consumption while allowing for potential premium restrictions. Global roles are not explicitly required by the current feature set, so no dedicated `/roles_admin` collection is proposed.\n\nQAPs (Query as a security predicate) are implicitly supported. For user-specific data (e.g., projects, media assets), a `list` operation on a collection like `/users/{userId}/projects` where `{userId}` is `request.auth.uid` will only return the current user's projects, enforcing security through the path itself. For public data like `templates`, the entire collection can be listed, with rules potentially filtering based on `isPremium` status. This prevents rules from acting as filters and ensures efficient, secure queries.\n\nData Clarity and Predictability are maintained by using explicit `status` fields (e.g., 'draft', 'queued', 'completed') and avoiding dynamic keys. Wildcards are descriptive (`{userId}`, `{projectId}`) to clearly indicate the entity they represent."
+  }
+}
